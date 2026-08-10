@@ -67,37 +67,25 @@ export default function MeetOurMentor() {
     }
   ];
 
-  // Timeline data
-  const timelineEvents = [
+  // Academic Foundation Timeline Data
+  const academicTimeline = [
     {
-      year: "2008",
-      title: "Education",
-      icon: GraduationCap,
-      description: "M.Tech from IIT Bombay in Applied Physics; topped department in classical & quantum mechanics."
+      degree: "Bachelor of Mechanical Engineering",
+      institution: "Fr. Conceicao Rodrigues College of Engineering",
+      location: "(Fr. CRCE), Mumbai",
+      icon: GraduationCap
     },
     {
-      year: "2010",
-      title: "Teaching Journey",
-      icon: BookOpen,
-      description: "Began coaching JEE & NEET aspirants with a revolutionary visual-first problem-solving approach."
+      degree: "Master’s in Naval Architecture & Ocean Engineering",
+      institution: "Indian Institute of Technology Kharagpur",
+      location: "(IIT Kharagpur)",
+      icon: GraduationCap
     },
     {
-      year: "2015",
-      title: "Institute Founded",
-      icon: Award,
-      description: "Established V.S.R.P.T in Kothrud, Pune to offer small-batch mentorship & 24/7 doubt resolution."
-    },
-    {
-      year: "2020",
-      title: "Student Milestones",
-      icon: Sparkles,
-      description: "Crossed 500+ top 1,000 AIR ranks in JEE & NEET alongside consistent 100/100 board scores."
-    },
-    {
-      year: "2026+",
-      title: "Future Vision",
-      icon: Rocket,
-      description: "Pioneering interactive 3D physics simulators & AI-assisted conceptual diagnostic engines for every student."
+      degree: "Specialization in Piping & Structural Engineering",
+      institution: "Indian Institute of Technology Bombay",
+      location: "(Powai)",
+      icon: GraduationCap
     }
   ];
 
@@ -378,55 +366,61 @@ export default function MeetOurMentor() {
           </motion.div>
         </div>
 
-        {/* 5. TIMELINE SECTION */}
-        <div className="space-y-12 pt-6">
+        {/* 5. ACADEMIC FOUNDATION TIMELINE SECTION */}
+        <div className="space-y-10 pt-6">
           <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="text-xs font-mono uppercase tracking-wider text-purple-600 dark:text-purple-400 font-extrabold bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-900/50 px-3 py-1 rounded-md">
-              JOURNEY & MILESTONES
+            <span className="text-xs font-mono uppercase tracking-wider text-blue-600 dark:text-blue-400 font-extrabold bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/50 px-3 py-1 rounded-md inline-block">
+              EDUCATIONAL BACKGROUND
             </span>
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              A Legacy of Educational Dedication
+            <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight uppercase">
+              ACADEMIC FOUNDATION
             </h3>
             <p className="text-slate-600 dark:text-slate-400 text-sm">
-              Tracing the journey from IIT research corridors to transforming thousands of young minds in Pune.
+              Built upon rigorous engineering and research disciplines from premier institutions.
             </p>
           </div>
 
-          {/* Responsive Horizontal/Vertical Timeline Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 relative">
-            {/* Connecting Line behind items on desktop */}
-            <div className="hidden md:block absolute top-1/2 left-8 right-8 h-0.5 bg-gradient-to-r from-blue-200 via-indigo-300 to-purple-200 dark:from-slate-800 dark:via-blue-900 dark:to-slate-800 -translate-y-6 -z-0" />
+          {/* Three-Step Vertical Timeline */}
+          <div className="max-w-3xl mx-auto relative px-3 sm:px-6">
+            {/* Dotted Vertical Connector Line between entries */}
+            <div className="absolute left-8 sm:left-11 top-8 bottom-8 w-0 border-l-2 border-dashed border-blue-300 dark:border-blue-800/80 z-0" />
 
-            {timelineEvents.map((item, idx) => {
-              const IconComp = item.icon;
-              return (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1, duration: 0.5 }}
-                  className="bg-white/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all relative z-10 flex flex-col justify-between group hover:border-blue-300 dark:hover:border-blue-800"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-2.5 py-1 rounded-md border border-blue-200/60 dark:border-blue-900/50">
-                        {item.year}
-                      </span>
-                      <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                        <IconComp className="h-4 w-4" />
+            <div className="space-y-8 sm:space-y-10 relative z-10">
+              {academicTimeline.map((item, idx) => {
+                const IconComp = item.icon;
+                return (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.15, duration: 0.5 }}
+                    whileHover={{ x: 4 }}
+                    className="flex items-start gap-4 sm:gap-6 group"
+                  >
+                    {/* Graduation-Cap Icon Badge */}
+                    <div className="relative shrink-0 pt-1">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300 ring-4 ring-slate-50 dark:ring-slate-950">
+                        <IconComp className="h-6 w-6 sm:h-7 sm:w-7" />
                       </div>
                     </div>
-                    <h4 className="font-sans font-extrabold text-sm text-slate-900 dark:text-white">
-                      {item.title}
-                    </h4>
-                    <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
-                      {item.description}
-                    </p>
-                  </div>
-                </motion.div>
-              );
-            })}
+
+                    {/* Qualification & Institution Details Card */}
+                    <div className="flex-1 min-w-0 bg-white/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-all group-hover:border-blue-300 dark:group-hover:border-blue-800/80 space-y-2">
+                      <h4 className="font-sans font-extrabold text-base sm:text-lg text-slate-900 dark:text-white leading-snug break-words">
+                        {item.degree}
+                      </h4>
+                      <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 leading-normal break-words">
+                        {item.institution}
+                      </p>
+                      <p className="text-xs font-mono font-medium text-slate-500 dark:text-slate-400 break-words">
+                        {item.location}
+                      </p>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
