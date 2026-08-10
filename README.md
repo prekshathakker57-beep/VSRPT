@@ -1,4 +1,4 @@
-# Apex Physics Institute Website - Full-Stack Production Build
+# VSRPT Physics Institute Website - Full-Stack Production Build
 
 A complete, high-performance, responsive full-stack website for **Apex Physics Institute**, located in Kothrud, Pune. This website is built on a modern **React + Vite + TypeScript** stack powered by an **Express.js** backend. It features custom interactive physics simulators, a 3D Physics Playground, responsive multi-page routing, server-side secure email and WhatsApp notifications, and detailed visitor analytics.
 
