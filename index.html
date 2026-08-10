@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>V.S.R.P.T Physics Institute — Pune | Master Physics for JEE, NEET & CET</title>
+    <link rel="icon" type="image/jpeg" href="/vsrpt-logo.jpg" />
+    <script>
+      // Apply theme immediately to prevent white flash
+      (function() {
+        try {
+          var saved = localStorage.getItem("apex_physics_theme");
+          if (saved === "dark" || (!saved && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+            document.documentElement.classList.add("dark");
+          } else {
+            document.documentElement.classList.remove("dark");
+          }
+        } catch (e) {}
+      })();
+
+      // Early suppression of benign Vite WebSocket HMR disconnection rejections
+      window.addEventListener('unhandledrejection', function (event) {
+        var err = event && event.reason;
+        var msg = (err && (err.message || err.toString())) || String(err || '');
+        if (msg.indexOf('WebSocket') !== -1 || msg.indexOf('vite') !== -1 || msg.indexOf('ws') !== -1) {
+          event.preventDefault();
+        }
+      });
+      window.addEventListener('error', function (event) {
+        var msg = (event && event.message) || '';
+        if (msg.indexOf('WebSocket') !== -1 || msg.indexOf('vite') !== -1) {
+          event.preventDefault();
+        }
+      }, true);
+    </script>
+  </head>
+  <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
