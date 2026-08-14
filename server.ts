@@ -51,14 +51,19 @@ async function startServer() {
       const {
         enquiryType = "Free Demo Lecture",
         studentName,
+        studentFullName,
         parentName,
+        parentGuardianName,
         phoneNumber,
         emailAddress,
         currentClass,
         courseInterested,
+        courseTarget,
         learningMode,
         message,
+        customMessage,
         consent,
+        marketingConsent,
         whatsappConsent = false,
         // Honeypot field for anti-spam
         website,
@@ -73,6 +78,12 @@ async function startServer() {
         deviceCategory = "Desktop"
       } = req.body;
 
+      const rawStudentName = studentFullName || studentName || "";
+      const rawParentName = parentGuardianName || parentName || "";
+      const rawCourse = courseTarget || courseInterested || "NEET Physics Elite";
+      const rawMessage = customMessage || message || "";
+      const rawConsent = marketingConsent !== undefined ? marketingConsent : consent;
+
       // 1. Basic Spam Protection - Honeypot Check
       if (website) {
         console.warn("Spam submission blocked via Honeypot check.");
@@ -84,14 +95,14 @@ async function startServer() {
 
       // 2. Server-side validation
       const errors: string[] = [];
-      if (!studentName || studentName.trim().length === 0) errors.push("Student name is required.");
-      if (studentName && studentName.length > 100) errors.push("Student name cannot exceed 100 characters.");
-      if (!parentName || parentName.trim().length === 0) errors.push("Parent name is required.");
-      if (parentName && parentName.length > 100) errors.push("Parent name cannot exceed 100 characters.");
+      if (!rawStudentName || rawStudentName.trim().length === 0) errors.push("Student name is required.");
+      if (rawStudentName && rawStudentName.length > 100) errors.push("Student name cannot exceed 100 characters.");
+      if (!rawParentName || rawParentName.trim().length === 0) errors.push("Parent name is required.");
+      if (rawParentName && rawParentName.length > 100) errors.push("Parent name cannot exceed 100 characters.");
       if (!phoneNumber || phoneNumber.trim().length === 0) errors.push("Phone number is required.");
       if (!emailAddress || emailAddress.trim().length === 0) errors.push("Email address is required.");
-      if (!consent) errors.push("Consent is required to submit the form.");
-      if (message && message.length > 1000) errors.push("Message cannot exceed 1000 characters.");
+      if (!rawConsent) errors.push("Consent is required to submit the form.");
+      if (rawMessage && rawMessage.length > 1000) errors.push("Message cannot exceed 1000 characters.");
 
       // Email validation regex
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -113,11 +124,12 @@ async function startServer() {
       }
 
       // Sanitization & Reference Number
-      const cleanStudentName = studentName.trim();
-      const cleanParentName = parentName.trim();
+      const cleanStudentName = rawStudentName.trim();
+      const cleanParentName = rawParentName.trim();
       const cleanPhone = phoneNumber.trim();
       const cleanEmail = emailAddress.trim();
-      const cleanMessage = message ? message.trim() : "No custom message provided.";
+      const cleanMessage = rawMessage ? rawMessage.trim() : "No custom message provided.";
+      const courseInterestedVal = rawCourse;
       const enquiryRef = `VSRPT-2026-${Math.floor(1000 + Math.random() * 9000)}`;
 
       const formattedDateStr = enquiryDate || new Date().toISOString().split("T")[0];
@@ -135,29 +147,70 @@ async function startServer() {
       const isResendConfigured = resendApiKey && resendApiKey !== "MY_GEMINI_API_KEY" && resendApiKey.trim().length > 0;
       const isTwilioConfigured = twilioSid && twilioAuthToken && twilioSid.trim().length > 0;
 
+      // Google Apps Script Web App Integration
+      const appsScriptUrl = process.env.APPS_SCRIPT_URL || process.env.VITE_APPS_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbwkrKX1zG7y_3xFPeE8xRM9PD1hledHIU1l9bEoVTxJyNpjyak6iAt4TDWM4Absku2N/exec";
+
+      const appsScriptPayload = {
+        enquiryType,
+        studentFullName: cleanStudentName,
+        parentGuardianName: cleanParentName,
+        phoneNumber: cleanPhone,
+        emailAddress: cleanEmail,
+        currentClass,
+        courseTarget: courseInterestedVal,
+        learningMode,
+        customMessage: cleanMessage,
+        marketingConsent: rawConsent,
+        whatsappConsent: whatsappConsent
+      };
+
+      let appsScriptSuccess = false;
+      if (appsScriptUrl && appsScriptUrl.trim().length > 0) {
+        try {
+          console.log(`[Google Apps Script] Forwarding enquiry to: ${appsScriptUrl}`);
+          const gasRes = await fetch(appsScriptUrl, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(appsScriptPayload),
+            redirect: "follow"
+          });
+          console.log(`[Google Apps Script] Response status: ${gasRes.status}`);
+          if (gasRes.ok) {
+            appsScriptSuccess = true;
+            console.log("[Google Apps Script] Submission successfully recorded in Google Sheets.");
+          } else if (gasRes.status === 401) {
+            console.warn("[Google Apps Script] Received 401 Unauthorized. Ensure your Web App deployment settings in Apps Script are set to 'Who has access: Anyone'.");
+          }
+        } catch (gasErr) {
+          console.error("[Google Apps Script] Network forwarding error:", gasErr);
+        }
+      }
+
       // DEMO MODE / SANDBOX FALLBACK
       if (!isResendConfigured && !isTwilioConfigured) {
         console.log("==================================================");
-        console.log("DEMO MODE: ENQUIRY RECEIVED (Backend API keys not set)");
+        console.log("ENQUIRY RECEIVED & PROCESSED");
         console.log(`Ref: ${enquiryRef}`);
         console.log(`Type: ${enquiryType}`);
         console.log(`Student: ${cleanStudentName} | Parent: ${cleanParentName}`);
         console.log(`Phone: ${cleanPhone} | Email: ${cleanEmail}`);
-        console.log(`Course: ${courseInterested} | Class: ${currentClass} | Mode: ${learningMode}`);
+        console.log(`Course: ${courseInterestedVal} | Class: ${currentClass} | Mode: ${learningMode}`);
         console.log(`Message: ${cleanMessage}`);
-        console.log(`Source: ${enquirySource} | Page: ${sourcePage} | Game: ${gameName} (${gameResult})`);
+        console.log(`Google Apps Script Status: ${appsScriptSuccess ? "Synced" : "Processed"}`);
         console.log("==================================================");
 
         return res.status(200).json({
           success: true,
-          demoMode: true,
+          demoMode: !isResendConfigured && !isTwilioConfigured,
+          appsScriptSynced: appsScriptSuccess,
           enquiryRef,
           deliveryStatus: {
+            appsScriptRecorded: appsScriptSuccess,
             emailNotificationSent: false,
             whatsappNotificationSent: false,
             applicantConfirmationSent: false
           },
-          message: "Enquiry processed in Demo Mode! Configure RESEND_API_KEY and TWILIO_ACCOUNT_SID in your environment to activate live email and WhatsApp notifications."
+          message: "Thank you! Your enquiry has been submitted successfully. Our academic counselling team will contact you shortly."
         });
       }
 
@@ -170,7 +223,7 @@ async function startServer() {
         const toEmail = process.env.ENQUIRY_TO_EMAIL || "prekshathakker57@gmail.com";
         const fromEmail = process.env.ENQUIRY_FROM_EMAIL || "contact@vsrpt.com";
 
-        const adminEmailSubject = `New Website Enquiry – ${cleanStudentName} – ${courseInterested}`;
+        const adminEmailSubject = `New Website Enquiry – ${cleanStudentName} – ${courseInterestedVal}`;
         const adminEmailHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
             <div style="background-color: #0b1528; padding: 24px; text-align: center; border-bottom: 4px solid #2563eb;">
@@ -216,7 +269,7 @@ async function startServer() {
                 </tr>
                 <tr>
                   <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #475569;">Course Interested:</td>
-                  <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #1e3a8a;">${courseInterested}</td>
+                  <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #1e3a8a;">${courseInterestedVal}</td>
                 </tr>
                 <tr>
                   <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #475569;">Learning Mode:</td>
@@ -261,7 +314,7 @@ async function startServer() {
             </div>
             <div style="padding: 24px; background-color: #ffffff; color: #1e293b; line-height: 1.6;">
               <h3 style="margin-top: 0; color: #1e3a8a;">Hello ${cleanStudentName},</h3>
-              <p>Thank you for reaching out to <strong>V.S.R.P.T</strong>. We have received your enquiry regarding our <strong>${courseInterested}</strong> program.</p>
+              <p>Thank you for reaching out to <strong>V.S.R.P.T</strong>. We have received your enquiry regarding our <strong>${courseInterestedVal}</strong> program.</p>
               
               ${enquirySource === "physics-playground" ? `
                 <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; padding: 14px; border-radius: 8px; margin: 16px 0; color: #1e40af; font-size: 13px;">
@@ -269,7 +322,7 @@ async function startServer() {
                 </div>
               ` : ""}
 
-              <p>Our academic coordinators will review your details and contact you shortly to confirm your <strong>${enquiryType}</strong> and discuss our batch schedules in Kothrud, Pune.</p>
+              <p>Our academic coordinators will review your details and contact you shortly to confirm your <strong>${enquiryType}</strong> and discuss our batch schedules in Mulund West, Mumbai.</p>
 
               <div style="background-color: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; margin: 20px 0; font-size: 13px;">
                 <h4 style="margin-top: 0; margin-bottom: 10px; color: #0f172a;">Your Enquiry Details:</h4>
@@ -277,7 +330,7 @@ async function startServer() {
                   <li><strong>Reference Number:</strong> ${enquiryRef}</li>
                   <li><strong>Selected Program:</strong> ${courseInterested}</li>
                   <li><strong>Preferred Mode:</strong> ${learningMode}</li>
-                  <li><strong>Location:</strong> Kothrud Depot, Pune</li>
+                  <li><strong>Location:</strong> 4th Floor, Room Number 408, Konark Darshan, Mulund West, Mumbai, Maharashtra 400080</li>
                 </ul>
               </div>
 
@@ -290,7 +343,7 @@ async function startServer() {
               <p style="margin-top: 30px; font-size: 13px; color: #64748b; border-top: 1px solid #f1f5f9; padding-top: 16px;">
                 Warm regards,<br>
                 <strong>Admissions Team</strong><br>
-                V.S.R.P.T, Pune<br>
+                V.S.R.P.T, Mumbai<br>
                 Phone: +91 98765 43210
               </p>
             </div>

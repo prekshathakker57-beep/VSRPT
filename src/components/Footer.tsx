@@ -47,7 +47,7 @@ export default function Footer() {
             </Link>
             <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-sans">
               “Physics is not something to fear. It is something to explore.” 
-              Providing concept-based, numerical-focused coaching for engineering and medical entrance examinations in Pune.
+              Providing concept-based, numerical-focused coaching for engineering and medical entrance examinations in Mumbai.
             </p>
             
             {/* Social Icons */}

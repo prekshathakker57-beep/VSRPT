@@ -29,7 +29,7 @@ export default function Privacy() {
             <h2 className="font-sans font-bold text-lg">1. Commitment to Data Privacy</h2>
           </div>
           <p>
-            At {CENTRAL_CONFIG.instituteName} Pune, we treat student and parent data privacy with high sensitivity. We do not sell, distribute, or rent submitted personal variables (including name, telephone coordinates, and email addresses) to any third-party marketing companies.
+            At {CENTRAL_CONFIG.instituteName} Mumbai, we treat student and parent data privacy with high sensitivity. We do not sell, distribute, or rent submitted personal variables (including name, telephone coordinates, and email addresses) to any third-party marketing companies.
           </p>
         </div>
 

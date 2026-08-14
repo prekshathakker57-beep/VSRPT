@@ -667,7 +667,7 @@ export default function MeetOurMentor() {
               </div>
 
               <div className="p-4 bg-slate-950 text-slate-300 text-xs flex justify-between items-center font-mono">
-                <span>V.S.R.PT Physics Institute • Pune</span>
+                <span>V.S.R.PT Physics Institute • Mumbai</span>
                 <button
                   onClick={() => setIsVideoModalOpen(false)}
                   className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white font-bold"

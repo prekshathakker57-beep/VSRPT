@@ -3,13 +3,19 @@ import { Link, useNavigate } from "react-router-dom";
 import { 
   ArrowRight, Award, Compass, Play, BookOpen, Clock, Users, Flame, 
   HelpCircle, ChevronRight, CheckCircle2, ShieldAlert, Phone, MessageSquare,
-  FileCheck2, Target, UserCheck, Sparkles, X, ChevronLeft, Maximize2
+  FileCheck2, Target, UserCheck, Sparkles, X, ChevronLeft, Maximize2,
+  Camera, Image as ImageIcon, ZoomIn, Filter
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import SEO from "../components/SEO";
 import { CENTRAL_CONFIG, COURSES_DATA, TOPPERS_DATA, STUDENT_STORIES } from "../config";
 import examsImg from "../assets/images/exams-1.png";
 import conceptLearningImg from "../assets/images/concept-learning.jpeg";
+import conceptGdriveImg from "../assets/images/concept_gdrive.png";
+import conceptLearningNewImg from "../assets/images/concept_learning_new.png";
+import vishalSirImg from "../assets/images/vishal-sir.jpeg";
+import focusedStudentImg from "../assets/images/focused_student_1785919168638.jpg";
+import personalizedMentorshipImg from "../assets/images/personalized_mentorship.png";
 
 export interface GalleryImage {
   id: string;
@@ -17,20 +23,81 @@ export interface GalleryImage {
   fallbackSrcs?: string[];
   title: string;
   description: string;
+  category: "all" | "classroom" | "mentorship";
+  categoryName: string;
 }
 
-const CONCEPT_LEARNING_GALLERY: GalleryImage[] = [
+const PHOTO_GALLERY: GalleryImage[] = [
   {
     id: "concept-1",
-    src: conceptLearningImg,
+    src: conceptLearningNewImg,
     fallbackSrcs: [
-      "/images/concept-learning.jpeg",
-      "/images/WhatsApp Image 2026-07-27 at 1.23.12 PM.jpeg",
-      "/WhatsApp Image 2026-07-27 at 1.23.12 PM.jpeg",
-      "https://lh3.googleusercontent.com/d/1CChB1Aik4LR1mFpC6NL9JwbVJUpnzGG6"
+      "/images/concept_learning_new.png",
+      "https://lh3.googleusercontent.com/d/1CChB1Aik4LR1mFpC6NL9JwbVJUpnzGG6",
+      conceptGdriveImg,
+      "/images/concept_gdrive.png",
+      conceptLearningImg,
+      "/images/concept-learning.jpeg"
     ],
     title: "Concept-Based Physics Learning",
-    description: "Building strong fundamentals before moving to advanced problem solving at Apex Physics Institute."
+    description: "Interactive classroom problem-solving & derivation sessions focusing on deep conceptual physics clarity.",
+    category: "classroom",
+    categoryName: "Classroom"
+  },
+  {
+    id: "mentor-1",
+    src: vishalSirImg,
+    fallbackSrcs: [
+      "/images/vishal-sir.jpeg",
+      "/images/visha_sir.jpeg",
+      "/images/vishal-shibad.jpg",
+      "/mentor-portrait.jpg"
+    ],
+    title: "Prof. Vishal Shibad - Lead Mentor",
+    description: "Founder & Lead Physics Mentor conducting dedicated small-batch lectures and interactive doubt resolution.",
+    category: "mentorship",
+    categoryName: "Mentorship"
+  },
+  {
+    id: "focus-1",
+    src: conceptGdriveImg,
+    fallbackSrcs: [
+      "/images/concept_gdrive.png",
+      "https://lh3.googleusercontent.com/d/1MpYNFfVITMH_rkZxnmiHXbmNt0ajAhYn",
+      focusedStudentImg,
+      "/images/focused-student.jpg",
+      "/images/focus-image.png"
+    ],
+    title: "Focused Classroom Study Environment",
+    description: "High-concentration classroom sessions equipped with structured physics problem sets and guided practice.",
+    category: "classroom",
+    categoryName: "Classroom"
+  },
+  {
+    id: "exams-1",
+    src: examsImg,
+    fallbackSrcs: [
+      "/images/exams-1.png",
+      "/exams-1.png",
+      "/images/exams 1.png"
+    ],
+    title: "Structured Examination Preparation",
+    description: "Targeted test series, formula derivations & exam-oriented practice papers for JEE, NEET & HSC Boards.",
+    category: "classroom",
+    categoryName: "Classroom"
+  },
+  {
+    id: "mentorship-2",
+    src: personalizedMentorshipImg,
+    fallbackSrcs: [
+      "/images/personalized_mentorship.png",
+      "https://lh3.googleusercontent.com/d/1aiKudjr86o9hI73V1ZDuP90P_I_sWOe4",
+      "/images/students/testimonial-1.webp"
+    ],
+    title: "Personalized Academic Mentorship",
+    description: "One-on-one student interaction and 24/7 personal academic mentorship ensuring no doubt is left unresolved.",
+    category: "mentorship",
+    categoryName: "Mentorship"
   }
 ];
 
@@ -38,19 +105,25 @@ export default function Home() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("all");
   
-  // Gallery Lightbox state
+  // Gallery state & category filter
+  const [galleryFilter, setGalleryFilter] = useState<"all" | "classroom" | "mentorship">("all");
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
 
+  const filteredGallery = PHOTO_GALLERY.filter((img) => {
+    if (galleryFilter === "all") return true;
+    return img.category === galleryFilter;
+  });
+
   const handlePrevGallery = () => {
     setCurrentGalleryIndex((prev) => 
-      prev === 0 ? CONCEPT_LEARNING_GALLERY.length - 1 : prev - 1
+      prev === 0 ? filteredGallery.length - 1 : prev - 1
     );
   };
 
   const handleNextGallery = () => {
     setCurrentGalleryIndex((prev) => 
-      prev === CONCEPT_LEARNING_GALLERY.length - 1 ? 0 : prev + 1
+      prev === filteredGallery.length - 1 ? 0 : prev + 1
     );
   };
 
@@ -64,7 +137,7 @@ export default function Home() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isGalleryOpen]);
+  }, [isGalleryOpen, filteredGallery.length]);
   
   // Interactive Pendulum State for Hero section
   const [angle, setAngle] = useState(25);
@@ -149,7 +222,7 @@ export default function Home() {
               <span className="text-blue-700 dark:text-blue-400 font-semibold"> JEE Main</span>, 
               <span className="text-blue-700 dark:text-blue-400 font-semibold"> JEE Advanced</span>, 
               <span className="text-blue-700 dark:text-blue-400 font-semibold"> MHT-CET</span>, and 
-              Class 11–12 Board examinations in Kothrud, Pune.
+              Class 11–12 Board examinations in Mulund West, Mumbai.
             </p>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4">
@@ -344,11 +417,120 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Institute Photo Gallery Section */}
+      <section className="py-20 lg:py-24 bg-slate-100/70 dark:bg-slate-900/60 border-y border-slate-200/80 dark:border-slate-800/80 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        {/* Subtle background glow accent */}
+        <div className="absolute top-1/2 left-0 -translate-y-1/2 w-96 h-96 bg-blue-500/5 dark:bg-blue-500/10 blur-3xl rounded-full pointer-events-none" />
 
+        <div className="max-w-7xl mx-auto space-y-10 relative z-10">
+          {/* Gallery Header */}
+          <div className="text-center max-w-3xl mx-auto space-y-4">
+            <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-blue-100/80 dark:bg-blue-950/70 border border-blue-200/80 dark:border-blue-900/60 text-blue-700 dark:text-blue-300 text-xs font-bold font-mono tracking-wide uppercase">
+              <Camera className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+              <span>Campus & Learning Environment</span>
+            </div>
 
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              Institute Photo Gallery
+            </h2>
 
+            <p className="text-slate-600 dark:text-slate-300 text-sm md:text-base leading-relaxed">
+              Take a visual tour of life at {CENTRAL_CONFIG.instituteName}—from active conceptual lectures and mentorship sessions to student achievements and examination preparation.
+            </p>
+          </div>
 
-      {/* Pedagogy Focus Section */}
+          {/* Category Filter Tabs */}
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+            {[
+              { id: "all", label: "All Photos" },
+              { id: "classroom", label: "Classroom & Pedagogy" },
+              { id: "mentorship", label: "Mentorship" }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setGalleryFilter(tab.id as any);
+                  setCurrentGalleryIndex(0);
+                }}
+                className={`px-4 py-2 rounded-full text-xs font-bold transition-all border cursor-pointer flex items-center space-x-1.5 ${
+                  galleryFilter === tab.id
+                    ? "bg-blue-600 border-blue-500 text-white shadow-md shadow-blue-500/20"
+                    : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-900"
+                }`}
+              >
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Responsive Multi-Column Photo Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {filteredGallery.map((img, idx) => (
+              <motion.div
+                key={img.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: idx * 0.05 }}
+                onClick={() => {
+                  setCurrentGalleryIndex(idx);
+                  setIsGalleryOpen(true);
+                }}
+                className="group relative rounded-2xl overflow-hidden border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col"
+              >
+                {/* Image Aspect Container */}
+                <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
+                  <img
+                    src={img.src}
+                    alt={img.title}
+                    loading="lazy"
+                    decoding="async"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      const fallbacks = img.fallbackSrcs || [];
+                      const step = parseInt(target.dataset.fallbackStep || "0", 10);
+                      if (step < fallbacks.length) {
+                        target.dataset.fallbackStep = (step + 1).toString();
+                        target.src = fallbacks[step];
+                      }
+                    }}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 block"
+                  />
+
+                  {/* Gradient Overlay & Hover Badge */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent opacity-60 group-hover:opacity-90 transition-opacity flex flex-col justify-between p-3">
+                    {/* Category Tag */}
+                    <div className="flex justify-start">
+                      <span className="px-2.5 py-1 rounded-md text-[10px] font-mono font-bold bg-slate-950/80 text-blue-300 backdrop-blur-md border border-slate-700/60 shadow-sm">
+                        {img.categoryName}
+                      </span>
+                    </div>
+
+                    {/* View Photo Badge */}
+                    <div className="flex justify-end">
+                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-blue-600/90 text-white text-[11px] font-semibold backdrop-blur-sm group-hover:bg-blue-500 transition-colors shadow-md">
+                        <ZoomIn className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">View Photo</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card Title & Brief Overview */}
+                <div className="p-3 sm:p-4 bg-white dark:bg-slate-950 flex-1 flex flex-col justify-between">
+                  <h3 className="font-sans font-bold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    {img.title}
+                  </h3>
+                  <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1 leading-snug">
+                    {img.description}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
       <section className="py-20 bg-blue-50/20 dark:bg-slate-900/40 border-y border-blue-100 dark:border-slate-800/80 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           
@@ -554,39 +736,39 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Concept-Based Learning Full-Screen Lightbox Gallery Modal */}
+      {/* Photo Gallery Full-Screen Lightbox Modal */}
       <AnimatePresence>
-        {isGalleryOpen && (
+        {isGalleryOpen && filteredGallery.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-6 select-none"
+            className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-6 select-none"
             onClick={() => setIsGalleryOpen(false)}
           >
-            {/* Top Bar: Title, Step Counter & Close Button */}
+            {/* Top Bar: Title, Counter & Close Button */}
             <div 
               className="w-full max-w-5xl flex items-center justify-between text-white z-20 py-2"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center space-x-3">
-                <span className="p-2 rounded-xl bg-blue-600/30 border border-blue-500/40 text-blue-400">
-                  <BookOpen className="h-5 w-5" />
+              <div className="flex items-center space-x-3 min-w-0">
+                <span className="p-2 rounded-xl bg-blue-600/30 border border-blue-500/40 text-blue-400 shrink-0">
+                  <Camera className="h-5 w-5" />
                 </span>
-                <div>
-                  <h4 className="font-sans font-bold text-sm sm:text-base text-white">
-                    📘 Concept-Based Learning Gallery
+                <div className="truncate">
+                  <h4 className="font-sans font-bold text-sm sm:text-base text-white truncate">
+                    {filteredGallery[currentGalleryIndex]?.title || "Institute Photo"}
                   </h4>
                   <p className="text-xs text-slate-400">
-                    Image {currentGalleryIndex + 1} of {CONCEPT_LEARNING_GALLERY.length}
+                    Photo {currentGalleryIndex + 1} of {filteredGallery.length} • {filteredGallery[currentGalleryIndex]?.categoryName}
                   </p>
                 </div>
               </div>
 
               <button
                 onClick={() => setIsGalleryOpen(false)}
-                className="p-2.5 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-200 hover:text-white transition-colors border border-slate-700/60 shadow-lg group focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="p-2.5 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-200 hover:text-white transition-colors border border-slate-700/60 shadow-lg group focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer ml-3 shrink-0"
                 aria-label="Close Gallery"
               >
                 <X className="h-6 w-6 group-hover:scale-110 transition-transform" />
@@ -595,46 +777,46 @@ export default function Home() {
 
             {/* Main Lightbox Content Area */}
             <div 
-              className="relative my-auto w-full max-w-4xl flex items-center justify-center"
+              className="relative my-auto w-full max-w-5xl flex items-center justify-center px-2 sm:px-12"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Navigation Arrows (Shown when multiple images exist) */}
-              {CONCEPT_LEARNING_GALLERY.length > 1 && (
+              {/* Navigation Arrows */}
+              {filteredGallery.length > 1 && (
                 <>
                   <button
                     onClick={handlePrevGallery}
-                    className="absolute left-2 sm:-left-12 top-1/2 -translate-y-1/2 p-3 rounded-full bg-slate-900/80 hover:bg-blue-600 text-white transition-colors border border-slate-700/80 shadow-2xl z-20 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 p-2.5 sm:p-3.5 rounded-full bg-slate-900/80 hover:bg-blue-600 text-white transition-colors border border-slate-700/80 shadow-2xl z-30 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                     aria-label="Previous Image"
                   >
-                    <ChevronLeft className="h-6 w-6" />
+                    <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
                   </button>
 
                   <button
                     onClick={handleNextGallery}
-                    className="absolute right-2 sm:-right-12 top-1/2 -translate-y-1/2 p-3 rounded-full bg-slate-900/80 hover:bg-blue-600 text-white transition-colors border border-slate-700/80 shadow-2xl z-20 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 p-2.5 sm:p-3.5 rounded-full bg-slate-900/80 hover:bg-blue-600 text-white transition-colors border border-slate-700/80 shadow-2xl z-30 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                     aria-label="Next Image"
                   >
-                    <ChevronRight className="h-6 w-6" />
+                    <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
                   </button>
                 </>
               )}
 
               {/* Active Image Display */}
               <motion.div
-                key={CONCEPT_LEARNING_GALLERY[currentGalleryIndex].id}
+                key={filteredGallery[currentGalleryIndex]?.id}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                className="relative max-h-[75vh] max-w-full rounded-2xl overflow-hidden shadow-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-center p-2"
+                className="relative max-h-[72vh] max-w-full rounded-2xl overflow-hidden shadow-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-center p-2"
               >
                 <img
-                  src={CONCEPT_LEARNING_GALLERY[currentGalleryIndex].src}
-                  alt={CONCEPT_LEARNING_GALLERY[currentGalleryIndex].title}
-                  className="max-h-[70vh] w-auto max-w-full object-contain rounded-xl"
+                  src={filteredGallery[currentGalleryIndex]?.src}
+                  alt={filteredGallery[currentGalleryIndex]?.title}
+                  className="max-h-[68vh] w-auto max-w-full object-contain rounded-xl"
                   onError={(e) => {
                     const target = e.currentTarget;
-                    const fallbacks = CONCEPT_LEARNING_GALLERY[currentGalleryIndex].fallbackSrcs || [];
+                    const fallbacks = filteredGallery[currentGalleryIndex]?.fallbackSrcs || [];
                     const step = parseInt(target.dataset.fallbackStep || "0", 10);
                     if (step < fallbacks.length) {
                       target.dataset.fallbackStep = (step + 1).toString();
@@ -651,10 +833,10 @@ export default function Home() {
               onClick={(e) => e.stopPropagation()}
             >
               <h5 className="font-sans font-bold text-sm sm:text-base text-white">
-                {CONCEPT_LEARNING_GALLERY[currentGalleryIndex].title}
+                {filteredGallery[currentGalleryIndex]?.title}
               </h5>
               <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl mx-auto leading-relaxed">
-                {CONCEPT_LEARNING_GALLERY[currentGalleryIndex].description}
+                {filteredGallery[currentGalleryIndex]?.description}
               </p>
             </div>
           </motion.div>

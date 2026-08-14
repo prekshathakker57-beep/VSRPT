@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
-  Atom, Volume2, VolumeX, RotateCcw, AlertCircle, Play, 
-  Award, ChevronRight, ChevronLeft, Check, Target, 
+  Atom, Volume2, VolumeX, RotateCcw, AlertCircle, Play, Pause, 
+  Award, FileText, ChevronRight, ChevronLeft, Check, Target, 
   ArrowDownCircle, Activity, Eye, Zap, Sparkles, RefreshCw, ArrowLeft,
   X, CheckCircle2, HelpCircle, GraduationCap, Calendar
 } from "lucide-react";
@@ -529,7 +529,190 @@ export default function Explore() {
     navigate(`/contact?intent=admission&source=physics-playground&game=projectile-challenge&result=${resultState}#enquiry-form-section`);
   };
 
+  // --- EXPLAINER VIDEO PLAYER FALLBACK STATE ---
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [videoPlaybackProgress, setVideoPlaybackProgress] = useState(0);
+  const [showCaptions, setShowCaptions] = useState(true);
+  const fallbackCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  const captions = [
+    { start: 0, end: 5, text: "What would happen if Earth suddenly separated into four pieces?" },
+    { start: 5, end: 12, text: "The first major problem would be gravity. Every part of Earth would still have mass, creating its own pull." },
+    { start: 12, end: 18, text: "The atmosphere and oceans would no longer remain stable. Air, water, and debris would be thrown into space." },
+    { start: 18, end: 24, text: "The four sections would pull on one another, resulting in collisions or highly unstable orbits." },
+    { start: 24, end: 30, text: "Thankfully, Earth cannot split like this under normal conditions. Imagining it helps us understand force & energy." }
+  ];
+
+  const getActiveCaption = () => {
+    const active = captions.find(c => videoPlaybackProgress >= c.start && videoPlaybackProgress <= c.end);
+    return active ? active.text : "";
+  };
+
+  useEffect(() => {
+    const canvas = fallbackCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animId: number;
+    let t = 0;
+
+    const renderVideoFallback = () => {
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "rgba(59, 130, 246, 0.15)";
+      for (let i = 0; i < 20; i++) {
+        const x = (Math.sin(i * 999) + 1) * 0.5 * canvas.width;
+        const y = (Math.cos(i * 123) + 1) * 0.5 * canvas.height;
+        ctx.fillRect(x, y, 1.5, 1.5);
+      }
+
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+
+      if (isVideoPlaying) {
+        t += 0.02;
+        setVideoPlaybackProgress((prev) => {
+          const next = prev + 0.016;
+          return next > 30 ? 0 : next;
+        });
+      }
+
+      if (videoPlaybackProgress < 5) {
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 50, 0, Math.PI * 2);
+        ctx.fillStyle = "#3b82f6";
+        ctx.fill();
+        ctx.strokeStyle = "#22c55e";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        ctx.strokeStyle = "rgba(239, 68, 68, 0.5)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(centerX - 20, centerY - 20);
+        ctx.lineTo(centerX, centerY);
+        ctx.lineTo(centerX + 20, centerY + 20);
+        ctx.moveTo(centerX + 20, centerY - 20);
+        ctx.lineTo(centerX, centerY);
+        ctx.lineTo(centerX - 20, centerY + 20);
+        ctx.stroke();
+      } 
+      else if (videoPlaybackProgress >= 5 && videoPlaybackProgress < 12) {
+        const displacement = (videoPlaybackProgress - 5) * 4;
+        const parts = [
+          { dx: -displacement, dy: -displacement, color: "#1e3a8a" },
+          { dx: displacement, dy: -displacement, color: "#2563eb" },
+          { dx: -displacement, dy: displacement, color: "#3b82f6" },
+          { dx: displacement, dy: displacement, color: "#1d4ed8" }
+        ];
+
+        parts.forEach((part) => {
+          ctx.beginPath();
+          ctx.arc(centerX + part.dx, centerY + part.dy, 22, 0, Math.PI * 2);
+          ctx.fillStyle = part.color;
+          ctx.fill();
+          ctx.strokeStyle = "#22c55e";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          
+          ctx.strokeStyle = "rgba(56, 189, 248, 0.4)";
+          ctx.setLineDash([2, 2]);
+          ctx.beginPath();
+          ctx.arc(centerX + part.dx, centerY + part.dy, 32, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        });
+      } 
+      else if (videoPlaybackProgress >= 12 && videoPlaybackProgress < 18) {
+        const displacement = 28 + (videoPlaybackProgress - 12) * 5;
+        const parts = [
+          { dx: -30, dy: -30, color: "#1e3a8a" },
+          { dx: 30, dy: -30, color: "#2563eb" },
+          { dx: -30, dy: 30, color: "#3b82f6" },
+          { dx: 30, dy: 30, color: "#1d4ed8" }
+        ];
+
+        parts.forEach((part) => {
+          ctx.beginPath();
+          ctx.arc(centerX + part.dx, centerY + part.dy, 22, 0, Math.PI * 2);
+          ctx.fillStyle = part.color;
+          ctx.fill();
+          ctx.strokeStyle = "#f43f5e";
+          ctx.stroke();
+        });
+
+        ctx.fillStyle = "rgba(59, 130, 246, 0.5)";
+        for (let i = 0; i < 40; i++) {
+          const escapeRadius = displacement + (Math.sin(i * 3) * 15);
+          const angleRad = (i * Math.PI) / 20;
+          const px = centerX + escapeRadius * Math.cos(angleRad);
+          const py = centerY + escapeRadius * Math.sin(angleRad);
+          ctx.fillRect(px, py, 2.5, 2.5);
+        }
+      } 
+      else if (videoPlaybackProgress >= 18 && videoPlaybackProgress < 24) {
+        const timeFactor = (videoPlaybackProgress - 18) * 0.8;
+        const rotX1 = centerX + Math.cos(timeFactor) * 45;
+        const rotY1 = centerY + Math.sin(timeFactor) * 45;
+        const rotX2 = centerX + Math.cos(timeFactor + Math.PI/2) * 45;
+        const rotY2 = centerY + Math.sin(timeFactor + Math.PI/2) * 45;
+        const rotX3 = centerX + Math.cos(timeFactor + Math.PI) * 45;
+        const rotY3 = centerY + Math.sin(timeFactor + Math.PI) * 45;
+        const rotX4 = centerX + Math.cos(timeFactor + 3*Math.PI/2) * 45;
+        const rotY4 = centerY + Math.sin(timeFactor + 3*Math.PI/2) * 45;
+
+        const dynamicParts = [
+          { x: rotX1, y: rotY1 },
+          { x: rotX2, y: rotY2 },
+          { x: rotX3, y: rotY3 },
+          { x: rotX4, y: rotY4 }
+        ];
+
+        ctx.strokeStyle = "rgba(37, 99, 235, 0.4)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(rotX1, rotY1);
+        ctx.lineTo(rotX2, rotY2);
+        ctx.lineTo(rotX3, rotY3);
+        ctx.lineTo(rotX4, rotY4);
+        ctx.closePath();
+        ctx.stroke();
+
+        dynamicParts.forEach((part, i) => {
+          ctx.beginPath();
+          ctx.arc(part.x, part.y, 18, 0, Math.PI * 2);
+          ctx.fillStyle = i % 2 === 0 ? "#1d4ed8" : "#1e40af";
+          ctx.fill();
+        });
+      } 
+      else {
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+        ctx.fillStyle = "#ef4444";
+        ctx.fill();
+
+        ctx.strokeStyle = "rgba(239, 68, 68, 0.25)";
+        for (let r = 20; r < 140; r += 20) {
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, r + Math.sin(t) * 5, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = "#1e293b";
+        ctx.font = "bold 12px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("COLLAPSE RISK STAGE", centerX, centerY - 25);
+      }
+
+      animId = requestAnimationFrame(renderVideoFallback);
+    };
+
+    renderVideoFallback();
+
+    return () => cancelAnimationFrame(animId);
+  }, [isVideoPlaying, videoPlaybackProgress]);
 
   const renderGameIcon = (iconName: string) => {
     switch (iconName) {
@@ -975,7 +1158,128 @@ export default function Explore() {
 
       </section>
 
+      {/* Physics Explainer Video Section */}
+      <section className="py-20 bg-blue-50/20 border-t border-blue-100 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          
+          <div className="text-left max-w-3xl space-y-4 mb-12">
+            <span className="text-xs font-mono uppercase tracking-widest text-blue-600 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-full font-bold">
+              Hypothetical Space Simulation
+            </span>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
+              What If Earth Split Into Four Parts?
+            </h2>
+            <p className="text-slate-600 text-sm">
+              Explore hypothetical orbital predictions with a dedicated simulator. Keep closed captions turned on to read the academic explanation.
+            </p>
+          </div>
 
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+            
+            <div className="lg:col-span-8 space-y-4">
+              <div className="rounded-2xl border border-blue-100 bg-white overflow-hidden shadow-2xl relative">
+                
+                <div className="relative aspect-video w-full flex items-center justify-center bg-slate-50 border-b border-slate-100">
+                  <canvas
+                    ref={fallbackCanvasRef}
+                    width="640"
+                    height="360"
+                    className="w-full h-full block"
+                  />
+
+                  {showCaptions && getActiveCaption() && (
+                    <div className="absolute bottom-12 inset-x-6 text-center z-10">
+                      <span className="inline-block px-4 py-2 rounded bg-slate-900/95 border border-slate-800 text-white font-sans text-xs md:text-sm shadow-xl max-w-lg leading-relaxed">
+                        {getActiveCaption()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-slate-50 border-t border-blue-100 px-4 py-3 flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={() => setIsVideoPlaying(!isVideoPlaying)}
+                      className="p-2 rounded bg-white text-slate-850 hover:bg-slate-100 border border-slate-200 transition-all focus:outline-none cursor-pointer"
+                      title={isVideoPlaying ? "Pause Video" : "Play Video"}
+                    >
+                      {isVideoPlaying ? <Pause className="h-4 w-4 text-amber-500" /> : <Play className="h-4 w-4 text-blue-600 fill-current" />}
+                    </button>
+
+                    <div className="text-xs font-mono text-slate-500">
+                      <span>0:{Math.floor(videoPlaybackProgress).toString().padStart(2, "0")}</span>
+                      <span className="mx-1">/</span>
+                      <span>0:30</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={() => setShowCaptions(!showCaptions)}
+                      className={`px-2.5 py-1 rounded text-[10px] font-bold font-mono transition-all border cursor-pointer ${
+                        showCaptions ? "bg-blue-600 border-blue-500 text-white" : "bg-white border-slate-200 text-slate-400"
+                      }`}
+                    >
+                      CAPTIONS: {showCaptions ? "ON" : "OFF"}
+                    </button>
+                    
+                    <span className="text-[10px] font-mono text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded uppercase">
+                      MEDIA FALLBACK LOOP ACTIVE
+                    </span>
+                  </div>
+                </div>
+
+              </div>
+
+              <div className="p-5 rounded-xl bg-white border border-blue-100 shadow-sm text-left space-y-3">
+                <div className="flex items-center space-x-2 text-slate-500">
+                  <FileText className="h-4.5 w-4.5 text-blue-600" />
+                  <span className="font-sans font-bold text-xs uppercase tracking-wider">Video Narration Script Transcript</span>
+                </div>
+                
+                <p className="text-slate-600 text-xs italic leading-relaxed">
+                  “What would happen if Earth suddenly separated into four pieces? The first major problem would be gravity. Every part of Earth would still have mass, meaning each piece would create its own gravitational pull. The atmosphere and oceans would no longer remain stable. Enormous amounts of air, water, rock and debris could be thrown into space. The four sections would also pull on one another. Depending on their speed and direction, they might collide again, move into separate orbits or break into even smaller pieces. Life on Earth would not survive such a sudden event. Thankfully, Earth cannot simply split apart under normal conditions. But imagining such situations helps us understand gravity, mass, force, energy and planetary motion.”
+                </p>
+
+                <div className="h-px bg-slate-100" />
+
+                <div className="text-[10px] text-slate-500 leading-relaxed font-sans">
+                  <strong>Educational Disclaimer:</strong> This is a simplified hypothetical explanation created for educational purposes. Real planetary behavior would depend on mass, energy, velocity, gravity, and many other complex structural variables.
+                </div>
+              </div>
+
+            </div>
+
+            <div className="lg:col-span-4 text-left space-y-6">
+              <div className="p-6 rounded-2xl bg-white border border-blue-100 shadow-md space-y-4">
+                <span className="block text-xs font-mono text-slate-400 uppercase tracking-widest font-bold">Simulator Breakdown</span>
+                <h3 className="font-sans font-bold text-sm text-slate-900">The Orbits Animation</h3>
+                
+                <ul className="space-y-3.5 text-xs text-slate-600">
+                  <li className="flex items-start space-x-2">
+                    <span className="p-1 rounded bg-blue-50 border border-blue-100 text-blue-600 font-bold font-mono text-[10px] shrink-0 mt-0.5">0-5s</span>
+                    <span><strong>Earth Stress:</strong> Demonstrates tectonic faulting. Cracks start showing when centrifugal energy overpowers gravitational bonds.</span>
+                  </li>
+                  <li className="flex items-start space-x-2">
+                    <span className="p-1 rounded bg-blue-50 border border-blue-100 text-blue-600 font-bold font-mono text-[10px] shrink-0 mt-0.5">5-12s</span>
+                    <span><strong>Mass Distribution:</strong> Earth separates into 4 chunks. Each chunk preserves localized center-of-mass pulls.</span>
+                  </li>
+                  <li className="flex items-start space-x-2">
+                    <span className="p-1 rounded bg-blue-50 border border-blue-100 text-blue-600 font-bold font-mono text-[10px] shrink-0 mt-0.5">12-18s</span>
+                    <span><strong>Atmospheric Escapes:</strong> Fluid elements like water and gas vectors cannot stay bound without proper high-mass central pull.</span>
+                  </li>
+                  <li className="flex items-start space-x-2">
+                    <span className="p-1 rounded bg-blue-50 border border-blue-100 text-blue-600 font-bold font-mono text-[10px] shrink-0 mt-0.5">18-24s</span>
+                    <span><strong>Newtonian Multi-Body:</strong> Illustrates the complex 3-body / 4-body gravitational pulls causing unstable elliptical orbit oscillations.</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
 
     </div>
   );

@@ -18,7 +18,7 @@ export default function SEO({
   schemaType,
   schemaData
 }: SEOProps) {
-  const fullTitle = `${title} | ${CENTRAL_CONFIG.instituteName} Pune`;
+  const fullTitle = `${title} | ${CENTRAL_CONFIG.instituteName} Mumbai`;
   const metaDescription = description || CENTRAL_CONFIG.seo.defaultDescription;
   const metaKeywords = keywords || CENTRAL_CONFIG.seo.defaultKeywords;
   const canonicalUrl = `https://www.${CENTRAL_CONFIG.domainName}${canonicalPath}`;
@@ -90,16 +90,16 @@ export default function SEO({
       "email": CENTRAL_CONFIG.emailAddress,
       "address": {
         "@type": "PostalAddress",
-        "streetAddress": CENTRAL_CONFIG.fullAddress,
-        "addressLocality": "Kothrud",
+        "streetAddress": "4th Floor, Room Number 408, Konark Darshan, Mulund West",
+        "addressLocality": "Mulund West, Mumbai",
         "addressRegion": "Maharashtra",
-        "postalCode": "411038",
+        "postalCode": "400080",
         "addressCountry": "IN"
       },
       "geo": {
         "@type": "GeoCoordinates",
-        "latitude": 18.505705,
-        "longitude": 73.811566
+        "latitude": 19.1726,
+        "longitude": 72.9565
       },
       "url": `https://www.${CENTRAL_CONFIG.domainName}`,
       "openingHoursSpecification": [

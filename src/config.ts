@@ -41,11 +41,25 @@ export const CENTRAL_CONFIG = {
   whatsAppNumber: "+91 98765 43210",
   whatsAppNumberFormatted: "919876543210", // for wa.me links
   emailAddress: "contact@vsrpt.com",
-  fullAddress: "Plot 42, 2nd Floor, Sai Complex, Near Kothrud Depo, Karve Road, Kothrud",
-  cityAndPinCode: "Pune, Maharashtra - 411038",
+  fullAddress: "4th Floor, Room Number 408, Konark Darshan, Mulund West",
+  cityAndPinCode: "Mumbai, Maharashtra - 400080",
+  exactAddress: "4th Floor, Room Number 408, Konark Darshan, Mulund West, Mumbai, Maharashtra 400080",
   workingHours: "Monday to Saturday: 11:00 AM - 8:00 PM | Sunday: 10:00 AM - 2:00 PM",
-  googleMapsEmbedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3783.5118776850383!2d73.81156641538356!3d18.505705374461012!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bc2bfca05a41efb%3A0xe5a36378411b418!2sKothrud%20Bus%20Depot!5e0!3m2!1sen!2sin!4v1689650000000!5m2!1sen!2sin",
-  googleMapsLink: "https://maps.google.com/?q=V.S.R.P.T+Physics+Institute+Kothrud+Pune",
+  googleMapsEmbedUrl: "https://maps.google.com/maps?q=4th+Floor,+Room+Number+408,+Konark+Darshan,+Mulund+West,+Mumbai,+Maharashtra+400080&t=&z=16&ie=UTF8&iwloc=&output=embed",
+  googleMapsLink: "https://maps.google.com/?q=4th+Floor,+Room+Number+408,+Konark+Darshan,+Mulund+West,+Mumbai,+Maharashtra+400080",
+  
+  // =========================================================================
+  // GOOGLE APPS SCRIPT WEB APP ENDPOINT CONFIGURATION
+  // =========================================================================
+  appsScriptUrl: (typeof import.meta !== "undefined" && import.meta.env?.VITE_APPS_SCRIPT_URL) || "https://script.google.com/macros/s/AKfycbwkrKX1zG7y_3xFPeE8xRM9PD1hledHIU1l9bEoVTxJyNpjyak6iAt4TDWM4Absku2N/exec",
+
+  // Enquiry & Notifications Configuration
+  enquiryNotification: {
+    // Primary recipient email(s) for automatic new enquiry alerts
+    adminNotificationEmail: "prekshathakker57@gmail.com",
+    // Dedicated Google Sheet URL for managing and viewing all incoming admissions & demo enquiries
+    googleSheetUrl: "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit",
+  },
   
   // Classplus Student App Integration
   classplus: {
@@ -67,12 +81,17 @@ export const CENTRAL_CONFIG = {
 
   // SEO default configurations
   seo: {
-    titleTemplate: "%s | V.S.R.P.T Pune",
-    defaultDescription: "Concept-based physics coaching by V.S.R.P.T for NEET, JEE Main, JEE Advanced, MHT-CET, and Class 11-12 Board exams in Kothrud, Pune. Start exploring physics today!",
-    defaultKeywords: "V.S.R.P.T, vsrpt physics, physics coaching, physics class, NEET physics, JEE physics, MHT-CET physics, physics classes Pune, Kothrud",
+    titleTemplate: "%s | V.S.R.P.T Mumbai",
+    defaultDescription: "Concept-based physics coaching by V.S.R.P.T for NEET, JEE Main, JEE Advanced, MHT-CET, and Class 11-12 Board exams in Mulund West, Mumbai. Start exploring physics today!",
+    defaultKeywords: "V.S.R.P.T, vsrpt physics, physics coaching, physics class, NEET physics, JEE physics, MHT-CET physics, physics classes Mumbai, Mulund West",
     ogImage: "/vsrpt-logo.jpg"
   }
 };
+
+/**
+ * Top-level export of APPS_SCRIPT_URL for convenient access throughout the app
+ */
+export const APPS_SCRIPT_URL: string = CENTRAL_CONFIG.appsScriptUrl;
 
 export const COURSES_DATA: CourseConfig[] = [
   {

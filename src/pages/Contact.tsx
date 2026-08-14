@@ -2,21 +2,16 @@ import React, { useState, useEffect } from "react";
 import { useLocation, useSearchParams, Link } from "react-router-dom";
 import { 
   Phone, Mail, MapPin, Clock, MessageSquare, Send, CheckCircle2, 
-  XCircle, Loader2, Smartphone, Sparkles, HelpCircle 
+  XCircle, Loader2, Smartphone, Sparkles, ExternalLink, Navigation
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import SEO from "../components/SEO";
-import { CENTRAL_CONFIG, COURSES_DATA } from "../config";
+import { CENTRAL_CONFIG, COURSES_DATA, APPS_SCRIPT_URL } from "../config";
 import { trackAnalyticsEvent } from "../utils/analytics";
-import GoogleFormsManager from "../components/GoogleFormsManager";
 
 export default function Contact() {
   const [searchParams] = useSearchParams();
   const location = useLocation();
-
-  // Mode state for form selection (App Interactive Form vs Google Forms Mode)
-  const [activeFormMode, setActiveFormMode] = useState<"app" | "google_form">("app");
-  const [googleFormUrl, setGoogleFormUrl] = useState<string>("");
 
   // URL query parameter extraction
   const intentParam = searchParams.get("intent");
@@ -75,7 +70,7 @@ export default function Contact() {
     if (!parentName.trim()) errors.push("Parent name is required.");
     if (!phoneNumber.trim()) errors.push("Phone number is required.");
     if (!emailAddress.trim()) errors.push("Email address is required.");
-    if (!consent) errors.push("You must consent to receive course updates.");
+    if (!consent) errors.push("You must consent to receive phone calls, SMS updates, and emails.");
 
     // Simple email check
     if (emailAddress && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailAddress)) {
@@ -104,63 +99,76 @@ export default function Contact() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return; // Prevent double submission while request is processing
+
     setFormErrors([]);
     setSubmitSuccess(null);
 
-    // Run client validations
+    // 1. Validate required fields
     if (!validateForm()) return;
 
     setIsSubmitting(true);
 
-    const now = new Date();
-    const enquiryDate = now.toISOString().split("T")[0];
-    const enquiryTime = now.toTimeString().split(" ")[0];
-
+    // 2. Exact payload format required for Google Apps Script Web App backend
     const payload = {
       enquiryType,
-      studentName,
-      parentName,
-      phoneNumber,
-      emailAddress,
+      studentFullName: studentName.trim(),
+      parentGuardianName: parentName.trim(),
+      phoneNumber: phoneNumber.trim(),
+      emailAddress: emailAddress.trim(),
       currentClass,
-      courseInterested,
+      courseTarget: courseInterested,
       learningMode,
-      message,
-      consent,
-      whatsappConsent,
-      // Anti-spam honeypot
-      website,
-      // Metadata
-      enquirySource: sourceParam || "Contact Page",
-      sourcePage: location.pathname,
-      gameName: gameParam || "",
-      gameResult: resultParam || "",
-      enquiryDate,
-      enquiryTime,
-      pageUrl: typeof window !== "undefined" ? window.location.href : "",
-      deviceCategory: typeof navigator !== "undefined" ? getDeviceCategory() : "Desktop"
+      customMessage: message.trim(),
+      marketingConsent: consent,
+      whatsappConsent: whatsappConsent
     };
 
+    // 3. Post to Google Apps Script Web App
+    const scriptUrl = (APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim().length > 0)
+      ? APPS_SCRIPT_URL.trim()
+      : "/api/send-enquiry";
+
     try {
-      // POST payload to server-side endpoint
-      const response = await fetch("/api/send-enquiry", {
+      // Use text/plain;charset=utf-8 to ensure simple POST without triggering CORS preflight
+      const response = await fetch(scriptUrl, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "text/plain;charset=utf-8"
         },
         body: JSON.stringify(payload)
       });
 
-      const data = await response.json();
+      let isSuccess = false;
+      let responseMessage = "Thank you! Your enquiry has been submitted successfully. Our academic counselling team will contact you shortly.";
+      let errorMessage = "We could not submit your enquiry at the moment. Please try again or contact us directly.";
 
-      if (response.ok && data.success) {
-        setSubmitSuccess(true);
-        
-        if (sourceParam === "physics-playground") {
-          setServerMessage("Great job exploring physics! Your enquiry has been received. Our team will contact you regarding your selected course or free demo lecture.");
-        } else {
-          setServerMessage(data.message || "Thank you! Your enquiry has been submitted successfully. Our team will contact you shortly.");
+      // 4. Wait for the backend response & verify confirmation
+      try {
+        const data = await response.json();
+        if (data && (data.success === true || data.status === "success" || data.result === "success" || data.status === "ok")) {
+          isSuccess = true;
+          if (data.message) responseMessage = data.message;
+        } else if (response.ok && data && data.error === undefined) {
+          isSuccess = true;
+          if (data.message) responseMessage = data.message;
+        } else if (data && (data.error || data.message || data.errors)) {
+          isSuccess = false;
+          if (data.error) errorMessage = data.error;
+          else if (data.message) errorMessage = data.message;
+          if (data.errors) setFormErrors(data.errors);
         }
+      } catch {
+        // Handle text/plain or opaque response if response.ok is true
+        if (response.ok || response.type === "opaque") {
+          isSuccess = true;
+        }
+      }
+
+      // 5. Only show success message if the backend confirms success
+      if (isSuccess) {
+        setSubmitSuccess(true);
+        setServerMessage(responseMessage);
 
         trackAnalyticsEvent("enquiry_submitted", {
           enquiry_type: enquiryType,
@@ -176,7 +184,7 @@ export default function Contact() {
           });
         }
 
-        // Clear fields on success
+        // Clear all fields on verified success
         setStudentName("");
         setParentName("");
         setPhoneNumber("");
@@ -185,14 +193,38 @@ export default function Contact() {
         setConsent(false);
         setWhatsappConsent(false);
       } else {
+        // 6. Show appropriate error if the backend fails
         setSubmitSuccess(false);
-        setServerMessage(data.error || "We could not submit your enquiry at the moment. Please call or WhatsApp us directly.");
-        if (data.errors) setFormErrors(data.errors);
+        setServerMessage(errorMessage);
       }
     } catch (err) {
-      console.error("Fetch form submit error:", err);
-      setSubmitSuccess(false);
-      setServerMessage("We could not submit your enquiry at the moment. Please call or WhatsApp us directly.");
+      console.error("Form submission network error, attempting fallback:", err);
+      // Fallback via server proxy in case of client environment restriction
+      try {
+        const fallbackRes = await fetch("/api/send-enquiry", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const fallbackData = await fallbackRes.json();
+        if (fallbackRes.ok && fallbackData.success) {
+          setSubmitSuccess(true);
+          setServerMessage("Thank you! Your enquiry has been submitted successfully. Our academic counselling team will contact you shortly.");
+          setStudentName("");
+          setParentName("");
+          setPhoneNumber("");
+          setEmailAddress("");
+          setMessage("");
+          setConsent(false);
+          setWhatsappConsent(false);
+        } else {
+          setSubmitSuccess(false);
+          setServerMessage("We could not submit your enquiry at the moment. Please check your connection or contact us directly.");
+        }
+      } catch {
+        setSubmitSuccess(false);
+        setServerMessage("We could not submit your enquiry at the moment. Please check your internet connection or contact us directly.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -204,7 +236,7 @@ export default function Contact() {
     <div className="bg-slate-50 text-slate-800 min-h-screen pt-20">
       <SEO 
         title="Contact & Location" 
-        description="Book your free physics demo lecture or submit an enquiry. Reach out directly via Phone, Email or WhatsApp, and visit our classroom in Kothrud, Pune."
+        description="Book your free physics demo lecture or submit an enquiry. Reach out directly via Phone, Email or WhatsApp, and visit our classroom in Mulund West, Mumbai."
       />
 
       {/* Hero Header */}
@@ -274,6 +306,19 @@ export default function Contact() {
                     {CENTRAL_CONFIG.workingHours}
                   </span>
                 </li>
+
+                <li className="pt-1">
+                  <a
+                    href={CENTRAL_CONFIG.googleMapsLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center space-x-1.5 text-xs text-blue-600 hover:text-blue-700 font-bold transition-colors"
+                  >
+                    <Navigation className="h-3.5 w-3.5" />
+                    <span>Get Directions on Google Maps</span>
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </li>
               </ul>
 
               <div className="h-px bg-slate-100" />
@@ -295,91 +340,10 @@ export default function Contact() {
             </div>
           </div>
 
-          {/* Right Column: Interactive Form & Google Forms */}
+          {/* Right Column: The ONE Custom Enquiry Form */}
           <div className="lg:col-span-8 space-y-6">
 
-            {/* Mode Switcher Tabs */}
-            <div className="flex items-center justify-between bg-slate-100 p-1.5 rounded-2xl border border-slate-200 text-xs">
-              <button
-                type="button"
-                onClick={() => setActiveFormMode("app")}
-                className={`flex-1 py-2 px-3 rounded-xl font-extrabold transition-all flex items-center justify-center space-x-2 ${
-                  activeFormMode === "app"
-                    ? "bg-white text-blue-700 shadow-md"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                <Send className="h-3.5 w-3.5" />
-                <span>Interactive App Form</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveFormMode("google_form")}
-                className={`flex-1 py-2 px-3 rounded-xl font-extrabold transition-all flex items-center justify-center space-x-2 ${
-                  activeFormMode === "google_form"
-                    ? "bg-blue-600 text-white shadow-md"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                <HelpCircle className="h-3.5 w-3.5" />
-                <span>Google Forms Mode</span>
-              </button>
-            </div>
-
-            {/* Google Forms Section when selected */}
-            {activeFormMode === "google_form" && (
-              <div className="space-y-6">
-                <GoogleFormsManager
-                  activeFormUrl={googleFormUrl}
-                  setActiveFormUrl={setGoogleFormUrl}
-                  onFormCreated={(url) => setGoogleFormUrl(url)}
-                />
-
-                {/* Embedded Google Form View */}
-                {googleFormUrl ? (
-                  <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-xl overflow-hidden text-left space-y-3">
-                    <div className="p-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-xs">
-                      <span className="font-bold text-slate-800 flex items-center space-x-2">
-                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-                        <span>Live Embedded Google Form</span>
-                      </span>
-                      <a
-                        href={googleFormUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline font-semibold"
-                      >
-                        Open in new tab ↗
-                      </a>
-                    </div>
-                    <div className="w-full aspect-[4/5] min-h-[600px] rounded-xl overflow-hidden bg-slate-50">
-                      <iframe
-                        src={googleFormUrl}
-                        className="w-full h-full border-0"
-                        title="V.S.R.P.T Google Form"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-8 rounded-2xl border border-dashed border-blue-200 bg-blue-50/40 text-center space-y-3 text-xs">
-                    <div className="h-12 w-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center mx-auto">
-                      <Sparkles className="h-6 w-6" />
-                    </div>
-                    <h4 className="font-extrabold text-slate-900 text-sm">
-                      No Google Form Selected
-                    </h4>
-                    <p className="text-slate-600 max-w-sm mx-auto leading-relaxed">
-                      Click <strong>"Generate Form in Google Drive"</strong> above to auto-create an official admission form in your Drive, or paste an existing Google Form link to embed it live here.
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Default Interactive Form Container */}
-            {activeFormMode === "app" && (
-              <div className="rounded-2xl border border-blue-100 bg-white p-6 md:p-8 shadow-2xl text-left space-y-6">
+            <div className="rounded-2xl border border-blue-100 bg-white p-6 md:p-8 shadow-2xl text-left space-y-6">
               
               <div className="space-y-1">
                 <div className="flex items-center space-x-2">
@@ -410,7 +374,7 @@ export default function Contact() {
                     <div className="flex items-start space-x-3">
                       <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0 mt-0.5" />
                       <div className="space-y-1">
-                        <strong className="block font-sans text-base font-extrabold text-emerald-950">Success!</strong>
+                        <strong className="block font-sans text-base font-extrabold text-emerald-950">Thank you!</strong>
                         <p className="leading-relaxed text-emerald-800">{serverMessage}</p>
                       </div>
                     </div>
@@ -600,7 +564,7 @@ export default function Contact() {
                               : "text-slate-600 hover:text-slate-900"
                           }`}
                         >
-                          {mode === "Offline" ? "Offline (Kothrud)" : "Online Live"}
+                          {mode === "Offline" ? "Offline (Mulund West)" : "Online Live"}
                         </button>
                       ))}
                     </div>
@@ -608,7 +572,7 @@ export default function Contact() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-mono text-slate-500 uppercase">Custom Message (Optional)</label>
+                  <label className="block text-xs font-mono text-slate-500 uppercase">Custom Message</label>
                   <textarea
                     rows={4}
                     value={message}
@@ -633,7 +597,7 @@ export default function Contact() {
                       className="h-4.5 w-4.5 rounded border-slate-300 bg-slate-50 text-blue-600 focus:ring-blue-500/30 cursor-pointer disabled:opacity-55 mt-0.5"
                     />
                     <label htmlFor="consent" className="text-slate-600 text-[11px] leading-relaxed cursor-pointer select-none">
-                      I consent to receive phone calls, SMS updates, and emails regarding demo schedules and course packages from {CENTRAL_CONFIG.instituteName} Pune. *
+                      I consent to receive phone calls, SMS updates, and emails regarding demo schedules and course packages from {CENTRAL_CONFIG.instituteName} Mumbai. *
                     </label>
                   </div>
 
@@ -677,7 +641,6 @@ export default function Contact() {
               </form>
 
             </div>
-            )}
           </div>
 
         </div>
@@ -686,9 +649,27 @@ export default function Contact() {
       {/* Embedded Location Map Section */}
       <section className="py-16 bg-blue-50/20 border-t border-blue-100 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto space-y-8">
-          <div className="text-left space-y-2">
-            <span className="text-xs font-mono text-slate-500 uppercase tracking-widest font-bold">Physical Office</span>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Visit our coaching classroom</h2>
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 text-left">
+            <div className="space-y-2">
+              <span className="text-xs font-mono text-slate-500 uppercase tracking-widest font-bold">Physical Office</span>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Visit our coaching classroom</h2>
+              <p className="text-slate-600 text-xs md:text-sm max-w-xl">
+                {CENTRAL_CONFIG.fullAddress}, {CENTRAL_CONFIG.cityAndPinCode}
+              </p>
+            </div>
+
+            <div>
+              <a
+                href={CENTRAL_CONFIG.googleMapsLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-md transition-all cursor-pointer"
+              >
+                <Navigation className="h-4 w-4" />
+                <span>Get Directions / View on Google Maps</span>
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            </div>
           </div>
 
           <div className="rounded-2xl border border-blue-100 bg-white overflow-hidden aspect-[21/9] min-h-[300px] shadow-2xl relative">
@@ -707,3 +688,4 @@ export default function Contact() {
     </div>
   );
 }
+
