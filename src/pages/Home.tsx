@@ -79,6 +79,7 @@ const PHOTO_GALLERY: GalleryImage[] = [
     fallbackSrcs: [
       "/images/exams-1.png",
       "/exams-1.png",
+      "/images/structured-exam-prep.jpg",
       "/images/exams 1.png"
     ],
     title: "Structured Examination Preparation",

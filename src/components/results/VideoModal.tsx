@@ -8,6 +8,8 @@ interface VideoModalProps {
   isOpen: boolean;
   onClose: () => void;
   videoPath?: string;
+  embedUrl?: string;
+  videoUrl?: string;
   studentName: string;
   examination: string;
   achievement?: string;
@@ -19,6 +21,8 @@ export default function VideoModal({
   isOpen,
   onClose,
   videoPath,
+  embedUrl,
+  videoUrl,
   studentName,
   examination,
   achievement,
@@ -117,7 +121,15 @@ export default function VideoModal({
 
           {/* Video Container Area */}
           <div className="relative bg-slate-950 aspect-video w-full flex items-center justify-center overflow-hidden">
-            {videoPath && !videoError ? (
+            {embedUrl || (videoPath && videoPath.includes("youtube")) ? (
+              <iframe
+                src={embedUrl || videoPath}
+                title={`${studentName}'s Physics Story`}
+                className="w-full h-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            ) : videoPath && !videoError ? (
               <video
                 ref={videoRef}
                 src={videoPath}

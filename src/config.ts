@@ -36,10 +36,10 @@ export const CENTRAL_CONFIG = {
   instituteName: "V.S.R.P.T",
   domainName: "vsrpt.com",
   contactPerson: "Prof. Rohit Deshmukh (M.Tech, IIT Bombay)",
-  phoneNumber: "+91 98765 43210",
-  phoneNumberFormatted: "+919876543210", // for tel: links
-  whatsAppNumber: "+91 98765 43210",
-  whatsAppNumberFormatted: "919876543210", // for wa.me links
+  phoneNumber: "+91 9820959991",
+  phoneNumberFormatted: "+919820959991", // for tel: links
+  whatsAppNumber: "+91 9820959991",
+  whatsAppNumberFormatted: "919820959991", // for wa.me links
   emailAddress: "contact@vsrpt.com",
   fullAddress: "4th Floor, Room Number 408, Konark Darshan, Mulund West",
   cityAndPinCode: "Mumbai, Maharashtra - 400080",
@@ -64,8 +64,8 @@ export const CENTRAL_CONFIG = {
   // Classplus Student App Integration
   classplus: {
     orgCode: "VSRPT",
-    androidLink: "https://play.google.com/store/apps/details?id=co.vsrpt.physics",
-    iphoneLink: "https://apps.apple.com/us/app/vsrpt-physics-learning/id123456789", // Leave empty or provide mock
+    androidLink: "https://play.google.com/store/apps/details?id=my.classroom.app",
+    iphoneLink: "https://apps.apple.com/in/app/classplus/id1324522260",
     webLoginLink: "https://web.classplusapp.com",
     supportPhoneNumber: "+91 98765 43211",
     supportEmail: "appsupport@vsrpt.com"

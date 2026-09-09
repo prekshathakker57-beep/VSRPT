@@ -1,242 +1,88 @@
 // src/pages/Results.tsx
 import { useState } from "react";
-import { AlertTriangle, Award, Filter, GraduationCap, Star, BookOpen, Clock, Heart, Quote } from "lucide-react";
+import { Award, AlertTriangle } from "lucide-react";
 import SEO from "../components/SEO";
-import AchievementCarousel, { CarouselItem } from "../components/results/AchievementCarousel";
-import VideoModal from "../components/results/VideoModal";
+import TopperCard from "../components/results/TopperCard";
 import { CURRENT_TOPPERS_DATA, PAST_ACHIEVERS_DATA, Topper } from "../data/toppers";
-import { TESTIMONIALS_DATA, Testimonial } from "../data/testimonials";
 import { trackAnalyticsEvent } from "../utils/analytics";
 
 export default function Results() {
-  // Topper filter state
-  const [topperFilter, setTopperFilter] = useState<string>("ALL");
+  // Exam filter state: "ALL", "NEET", "JEE"
+  const [examFilter, setExamFilter] = useState<string>("ALL");
 
-  // Past achievers year filter state
-  const [pastAchieverYear, setPastAchieverYear] = useState<string>("ALL");
-
-  // Testimonials category filter state
-  const [testimonialCategory, setTestimonialCategory] = useState<string>("ALL");
-
-  // Video story modal state
-  const [selectedVideoStory, setSelectedVideoStory] = useState<{
-    isOpen: boolean;
-    videoPath?: string;
-    studentName: string;
-    examination: string;
-    achievement?: string;
-    quote?: string;
-    batchOrYear?: string;
-  } | null>(null);
-
-  // --- FILTER HANDLERS ---
-  const handleTopperFilterChange = (filter: string) => {
-    setTopperFilter(filter);
-    trackAnalyticsEvent("topper_filter_selected", {
-      examination: filter,
-      carousel_section: "current_toppers"
+  const handleExamFilterChange = (filter: string) => {
+    setExamFilter(filter);
+    trackAnalyticsEvent("exam_filter_selected", {
+      exam: filter,
+      section: "results_and_stories"
     });
   };
 
-  const handlePastAchieverYearChange = (year: string) => {
-    setPastAchieverYear(year);
-    trackAnalyticsEvent("past_achiever_selected", {
-      year: year,
-      carousel_section: "past_achievers"
-    });
-  };
+  // Filter datasets based on examination
+  const filteredCurrentToppers: Topper[] = CURRENT_TOPPERS_DATA.filter((t) => {
+    if (examFilter === "ALL") return true;
+    return t.exam.toUpperCase().includes(examFilter);
+  });
 
-  const handleTestimonialCategoryChange = (category: string) => {
-    setTestimonialCategory(category);
-    trackAnalyticsEvent("testimonial_filter_selected", {
-      student_category: category,
-      carousel_section: "student_experiences"
-    });
-  };
+  const filteredPastAchievers: Topper[] = PAST_ACHIEVERS_DATA.filter((t) => {
+    if (examFilter === "ALL") return true;
+    return t.exam.toUpperCase().includes(examFilter);
+  });
 
-  // --- FILTERED DATASETS ---
-  const filteredToppers: CarouselItem[] = CURRENT_TOPPERS_DATA
-    .filter((t) => {
-      if (topperFilter === "ALL") return true;
-      return t.examination.toUpperCase() === topperFilter.toUpperCase();
-    })
-    .map((t) => ({
-      id: t.id,
-      name: t.name,
-      image: t.image,
-      imageAlt: t.imageAlt,
-      examination: t.examination,
-      year: t.year,
-      physicsScore: t.physicsScore,
-      overallResult: t.overallResult,
-      course: t.course,
-      quote: t.quote,
-      achievement: t.achievement,
-      videoPath: t.videoPath,
-      avatarBg: t.avatarBg,
-      initials: t.initials
-    }));
-
-  const filteredPastAchievers: CarouselItem[] = PAST_ACHIEVERS_DATA
-    .filter((pa) => {
-      if (pastAchieverYear === "ALL") return true;
-      return String(pa.year) === pastAchieverYear;
-    })
-    .map((pa) => ({
-      id: pa.id,
-      name: pa.name,
-      image: pa.image,
-      imageAlt: pa.imageAlt,
-      examination: pa.examination,
-      year: pa.year,
-      physicsScore: pa.physicsScore,
-      overallResult: pa.overallResult,
-      course: pa.course,
-      quote: pa.quote,
-      achievement: pa.achievement,
-      videoPath: pa.videoPath,
-      avatarBg: pa.avatarBg,
-      initials: pa.initials
-    }));
-
-  const filteredTestimonials: CarouselItem[] = TESTIMONIALS_DATA
-    .filter((t) => {
-      if (testimonialCategory === "ALL") return true;
-      if (testimonialCategory === "current") return t.category === "current";
-      if (testimonialCategory === "former") return t.category === "former";
-      if (testimonialCategory === "parent") return t.category === "parent";
-      return true;
-    })
-    .map((t) => ({
-      id: t.id,
-      name: t.name,
-      image: t.image,
-      imageAlt: t.imageAlt,
-      examination: t.examination,
-      year: t.batchOrYear,
-      batchOrYear: t.batchOrYear,
-      category: t.category,
-      quote: t.quote,
-      videoPath: t.videoPath,
-      videoThumbnail: t.videoThumbnail,
-      videoDuration: t.videoDuration,
-      achievement: t.achievement,
-      parentStudentName: t.parentStudentName,
-      rating: t.rating,
-      avatarBg: t.avatarBg,
-      initials: t.initials
-    }));
-
-  const handleOpenVideoModal = (item: CarouselItem) => {
-    setSelectedVideoStory({
-      isOpen: true,
-      videoPath: item.videoPath,
-      studentName: item.name,
-      examination: item.examination || "Physics Student",
-      achievement: item.achievement,
-      quote: item.quote,
-      batchOrYear: String(item.year || item.batchOrYear || "")
-    });
+  /**
+   * Helper to return responsive grid classes based on card count.
+   * Ensures a single card (like Tanisha Iyar) is never awkwardly stretched across the screen,
+   * while 2 or 3+ cards cleanly fill a 2-col or 3-col grid on tablet and desktop.
+   */
+  const getGridClass = (count: number) => {
+    if (count === 1) {
+      return "max-w-sm mx-auto grid grid-cols-1 gap-6 sm:gap-8";
+    }
+    if (count === 2) {
+      return "max-w-2xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8";
+    }
+    return "max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8";
   };
 
   return (
-    <div className="bg-slate-50 text-slate-800 min-h-screen pt-20">
-      <SEO 
-        title="Topper Results & Student Stories" 
-        description="Verify how student-centric pedagogy converts physics anxiety into elite ranks for NEET, JEE and Boards. Review verified scores and video stories."
+    <div className="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen pt-20 transition-colors duration-300">
+      <SEO
+        title="Topper Results & Student Stories | V.S.R.P.T"
+        description="Explore verified student video stories, NEET and JEE toppers, and academic outcomes from V.S.R.P.T Physics Institute."
       />
 
-      {/* Hero Header */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 border-b border-blue-100 text-center bg-white">
+      {/* ━━━━━━━━━━━━━━━━━━━━━━ 
+          1. HEADER: RESULTS & STORIES 
+         ━━━━━━━━━━━━━━━━━━━━━━ */}
+      <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-center">
         <div className="max-w-4xl mx-auto space-y-4">
-          <span className="text-xs font-mono uppercase tracking-widest text-blue-600 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-full font-bold">
-            Pedagogy Outcomes
+          <span className="inline-flex items-center space-x-1.5 text-xs font-mono uppercase tracking-widest text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 px-3.5 py-1.5 rounded-full font-bold">
+            <Award className="h-3.5 w-3.5" />
+            <span>Academic Excellence</span>
           </span>
-          <h1 className="font-sans font-extrabold text-3xl sm:text-4xl md:text-5xl tracking-tight text-slate-900 leading-tight">
-            Results Built Through Understanding.
+
+          <h1 className="font-sans font-extrabold text-3xl sm:text-4xl md:text-5xl tracking-tight text-slate-900 dark:text-white leading-tight">
+            Results &amp; Stories
           </h1>
-          <p className="text-slate-600 text-sm md:text-base max-w-xl mx-auto leading-relaxed">
-            We celebrate genuine conceptual mastery. Browse our toppers, past achievers, and student video interviews detailing individual academic transitions.
-          </p>
-        </div>
-      </section>
 
-      {/* STUDENT EXPERIENCES (VIDEO TESTIMONIALS) SECTION */}
-      <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b border-blue-100">
-        
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-12">
-          <span className="text-xs font-mono uppercase tracking-widest text-blue-600 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-full font-bold">
-            Student Experiences
-          </span>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
-            Hear directly from students who learned to understand physics with confidence.
-          </h2>
-          <p className="text-slate-600 text-sm md:text-base leading-relaxed">
-            Watch current and former students share how concept-based teaching, interactive simulations, and 24/7 doubt solving transformed their exam preparation.
+          <p className="text-slate-600 dark:text-slate-300 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+            Real students, verified outcomes, and deep conceptual clarity. Explore authentic video stories from our physics toppers and achievers.
           </p>
 
-          {/* Testimonial Category Filters */}
-          <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
+          {/* Clean Exam Filter Tabs */}
+          <div className="flex items-center justify-center gap-2 pt-2">
             {[
-              { id: "ALL", label: "All Stories" },
-              { id: "current", label: "Current Students" },
-              { id: "former", label: "Former Students" },
-              { id: "parent", label: "Parent Reviews" }
-            ].map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => handleTestimonialCategoryChange(cat.id)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
-                  testimonialCategory === cat.id
-                    ? "bg-blue-600 border-blue-500 text-white shadow-md"
-                    : "bg-white border-slate-200 text-slate-600 hover:text-blue-600 hover:bg-blue-50"
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Curved Thumbnail Carousel for Student Experiences */}
-        <AchievementCarousel
-          items={filteredTestimonials}
-          variant="testimonial"
-          sectionTitle="Student Experiences"
-          emptyMessage="No video testimonials found for the selected category."
-          onWatchVideo={handleOpenVideoModal}
-          carouselId="student_experiences"
-        />
-
-      </section>
-
-      {/* 1. CURRENT TOPPERS SECTION WITH CAROUSEL */}
-      <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 text-left">
-          <div className="space-y-2">
-            <span className="text-xs font-mono text-slate-400 uppercase tracking-widest font-bold">Hall of Fame</span>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Current Toppers</h2>
-          </div>
-
-          {/* Topper Filter Tabs */}
-          <div className="flex flex-wrap gap-2">
-            {[
-              { id: "ALL", label: "All Toppers" },
+              { id: "ALL", label: "All Exams" },
               { id: "NEET", label: "NEET" },
-              { id: "JEE MAIN", label: "JEE Main" },
-              { id: "JEE ADVANCED", label: "JEE Advanced" },
-              { id: "MHT-CET", label: "MHT-CET" },
-              { id: "CLASS 11", label: "Class 11" },
-              { id: "CLASS 12 BOARDS", label: "Class 12 Boards" }
+              { id: "JEE", label: "JEE" }
             ].map((f) => (
               <button
                 key={f.id}
-                onClick={() => handleTopperFilterChange(f.id)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold uppercase transition-all border cursor-pointer ${
-                  topperFilter === f.id
-                    ? "bg-blue-600 border-blue-500 text-white shadow-md"
-                    : "bg-white border-slate-200 text-slate-600 hover:text-blue-600 hover:bg-blue-50"
+                onClick={() => handleExamFilterChange(f.id)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold font-mono tracking-wide transition-all border cursor-pointer ${
+                  examFilter === f.id
+                    ? "bg-blue-600 border-blue-500 text-white shadow-md shadow-blue-500/20"
+                    : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-700/50"
                 }`}
               >
                 {f.label}
@@ -244,118 +90,87 @@ export default function Results() {
             ))}
           </div>
         </div>
-
-        {/* Curved Thumbnail Carousel for Current Toppers */}
-        <AchievementCarousel
-          items={filteredToppers}
-          variant="topper"
-          sectionTitle="Current Toppers"
-          emptyMessage="No student result has been added to this category yet."
-          onWatchVideo={handleOpenVideoModal}
-          carouselId="current_toppers"
-        />
-
       </section>
 
-      {/* 2. PAST ACHIEVERS SECTION WITH CAROUSEL */}
-      <section className="py-16 bg-blue-50/30 border-y border-blue-100 px-4 sm:px-6 lg:px-8">
+      {/* ━━━━━━━━━━━━━━━━━━━━━━ 
+          2. CURRENT TOPPERS (2026) 
+         ━━━━━━━━━━━━━━━━━━━━━━ */}
+      <section className="py-14 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">
+          <div className="inline-flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-mono font-bold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+            <span>2026</span>
+          </div>
+
+          <h2 className="font-sans font-extrabold text-2xl sm:text-3xl text-slate-900 dark:text-white tracking-tight">
+            Current Toppers
+          </h2>
+
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-sans">
+            Our current batch students setting academic benchmarks in physics problem solving.
+          </p>
+        </div>
+
+        {filteredCurrentToppers.length > 0 ? (
+          <div className={getGridClass(filteredCurrentToppers.length)}>
+            {filteredCurrentToppers.map((topper) => (
+              <TopperCard key={`${topper.name}-${topper.year}`} topper={topper} />
+            ))}
+          </div>
+        ) : (
+          <div className="max-w-md mx-auto p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center space-y-2">
+            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+              No 2026 topper story currently matching "{examFilter}".
+            </p>
+          </div>
+        )}
+      </section>
+
+      {/* ━━━━━━━━━━━━━━━━━━━━━━ 
+          3. PAST ACHIEVERS (2025) 
+         ━━━━━━━━━━━━━━━━━━━━━━ */}
+      <section className="py-14 sm:py-16 px-4 sm:px-6 lg:px-8 bg-slate-100/70 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto">
-          
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 text-left">
-            <div className="space-y-2">
-              <span className="text-xs font-mono text-slate-400 uppercase tracking-widest font-bold">Historical Ledger</span>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Past Achievers</h2>
+          <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">
+            <div className="inline-flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-mono font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
+              <span>2025</span>
             </div>
 
-            {/* Year Selector Toggles */}
-            <div className="flex flex-wrap gap-2">
-              {[
-                { id: "ALL", label: "All Years" },
-                { id: "2026", label: "2026 Batch" },
-                { id: "2025", label: "2025 Batch" },
-                { id: "2024", label: "2024 Batch" },
-                { id: "2023", label: "2023 Batch" }
-              ].map((yr) => (
-                <button
-                  key={yr.id}
-                  onClick={() => handlePastAchieverYearChange(yr.id)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
-                    pastAchieverYear === yr.id
-                      ? "bg-blue-600 border-blue-500 text-white shadow-md"
-                      : "bg-white border-slate-200 text-slate-600 hover:text-blue-600 hover:bg-blue-50"
-                  }`}
-                >
-                  {yr.label}
-                </button>
-              ))}
-            </div>
+            <h2 className="font-sans font-extrabold text-2xl sm:text-3xl text-slate-900 dark:text-white tracking-tight">
+              Past Achievers
+            </h2>
+
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-sans">
+              Alumni who mastered physics fundamentals at V.S.R.P.T and cracked their competitive exams.
+            </p>
           </div>
 
-          {/* Curved Thumbnail Carousel for Past Achievers */}
-          <AchievementCarousel
-            items={filteredPastAchievers}
-            variant="topper"
-            sectionTitle="Past Achievers"
-            emptyMessage="No historical achiever record found for the selected year."
-            onWatchVideo={handleOpenVideoModal}
-            carouselId="past_achievers"
-          />
-
-          {/* Compact Archive Grid below Carousel */}
-          <div className="mt-12 pt-8 border-t border-blue-100/80">
-            <h3 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-widest mb-4 text-left">
-              Historical Ledger Snapshot ({pastAchieverYear === "ALL" ? "All Batches" : `${pastAchieverYear} Batch`})
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {filteredPastAchievers.map((achiever) => (
-                <div
-                  key={achiever.id}
-                  className="p-4 rounded-2xl border border-blue-100 bg-white text-left flex items-center space-x-3.5 hover:border-blue-300 transition-all shadow-sm"
-                >
-                  <div className={`h-11 w-11 rounded-full bg-gradient-to-br ${achiever.avatarBg || "from-blue-600 to-indigo-800"} text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm`}>
-                    {achiever.initials || achiever.name.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h4 className="font-sans font-bold text-sm text-slate-900 truncate">{achiever.name}</h4>
-                    <span className="block text-[11px] text-slate-500 truncate mt-0.5">
-                      {achiever.examination} ({achiever.year}) — {achiever.achievement}
-                    </span>
-                    <span className="block text-[10px] text-emerald-600 font-mono font-semibold mt-0.5">
-                      Physics: {achiever.physicsScore}
-                    </span>
-                  </div>
-                </div>
+          {filteredPastAchievers.length > 0 ? (
+            <div className={getGridClass(filteredPastAchievers.length)}>
+              {filteredPastAchievers.map((topper) => (
+                <TopperCard key={`${topper.name}-${topper.year}`} topper={topper} />
               ))}
             </div>
-          </div>
-
+          ) : (
+            <div className="max-w-md mx-auto p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center space-y-2">
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                No 2025 achiever story currently matching "{examFilter}".
+              </p>
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Disclaimer Section */}
-      <section className="py-12 bg-white px-4 sm:px-6 lg:px-8 border-t border-blue-100 text-center">
-        <div className="max-w-3xl mx-auto flex items-start space-x-3 text-slate-500 text-left bg-slate-50 p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-          <div className="text-xs font-sans leading-relaxed text-slate-600">
-            <strong>Results &amp; Stories Disclaimer:</strong> Results and student stories are published only after receiving permission from the student or guardian. Individual results vary and are not guaranteed.
+      {/* ━━━━━━━━━━━━━━━━━━━━━━ 
+          4. DISCLAIMER 
+         ━━━━━━━━━━━━━━━━━━━━━━ */}
+      <section className="py-10 bg-white dark:bg-slate-950 px-4 sm:px-6 lg:px-8 border-t border-slate-200 dark:border-slate-800">
+        <div className="max-w-3xl mx-auto flex items-start space-x-3 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
+          <div className="text-xs font-sans leading-relaxed text-slate-600 dark:text-slate-300">
+            <strong>Results &amp; Stories Disclaimer:</strong> All student video testimonials and result records are published with parental and student consent. Individual examination outcomes depend on dedicated study effort and consistent problem-solving practice.
           </div>
         </div>
       </section>
-
-      {/* Accessible Video Story Modal */}
-      {selectedVideoStory && (
-        <VideoModal
-          isOpen={selectedVideoStory.isOpen}
-          onClose={() => setSelectedVideoStory(null)}
-          videoPath={selectedVideoStory.videoPath}
-          studentName={selectedVideoStory.studentName}
-          examination={selectedVideoStory.examination}
-          achievement={selectedVideoStory.achievement}
-          quote={selectedVideoStory.quote}
-          batchOrYear={selectedVideoStory.batchOrYear}
-        />
-      )}
-
     </div>
   );
 }

@@ -189,14 +189,14 @@ export default function MeetOurMentor() {
                     alt="Prof. Vishal Shibad, Founder and Physics Mentor"
                     loading="eager"
                     decoding="async"
-                    className="h-full w-full object-contain object-top"
+                    className="h-full w-full object-cover object-top"
                     referrerPolicy="no-referrer"
                     onError={(e) => {
                       const target = e.currentTarget;
                       const step = parseInt(target.dataset.fallbackStep || "0", 10);
                       if (step === 0) {
                         target.dataset.fallbackStep = "1";
-                        target.src = "/images/visha sir .jpeg";
+                        target.src = "/images/vishal-shibad-founder.jpg";
                       } else if (step === 1) {
                         target.dataset.fallbackStep = "2";
                         target.src = "/images/vishal-sir.jpeg";
@@ -501,46 +501,15 @@ export default function MeetOurMentor() {
               </p>
             </div>
 
-            {/* Video Thumbnail Preview Area */}
-            <div className="relative z-10 mt-6 aspect-video rounded-2xl overflow-hidden border border-white/10 group cursor-pointer shadow-xl bg-slate-950"
-              onClick={() => setIsVideoModalOpen(true)}
-            >
-              <img 
-                src={vishaSirImg} 
-                alt="Prof. Vishal Shibad Video Introduction" 
-                className="w-full h-full object-cover object-top opacity-60 group-hover:scale-105 transition-transform duration-500"
-                loading="lazy"
-                decoding="async"
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  const step = parseInt(target.dataset.fallbackStep || "0", 10);
-                  if (step === 0) {
-                    target.dataset.fallbackStep = "1";
-                    target.src = "/images/visha sir .jpeg";
-                  } else if (step === 1) {
-                    target.dataset.fallbackStep = "2";
-                    target.src = "/images/vishal-sir.jpeg";
-                  } else if (step === 2) {
-                    target.dataset.fallbackStep = "3";
-                    target.src = "/images/vishal-shibad.jpg";
-                  } else if (step === 3) {
-                    target.dataset.fallbackStep = "4";
-                    target.src = "/mentor-portrait.jpg";
-                  }
-                }}
+            {/* Embedded YouTube Video Area */}
+            <div className="relative z-10 mt-6 aspect-video w-full rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-slate-950">
+              <iframe
+                src="https://www.youtube.com/embed/6NwS6PsSwyY"
+                title="Meet Your Mentor — Prof. Vishal Shibad Video Introduction"
+                className="w-full h-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent" />
-              
-              {/* Glowing Play Button Center */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center space-y-3">
-                <div className="p-4 sm:p-5 rounded-full bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/50 group-hover:scale-110 active:scale-95 transition-all">
-                  <Play className="h-7 w-7 fill-current translate-x-0.5" />
-                </div>
-                <span className="text-xs font-mono font-bold tracking-wider text-slate-200 bg-slate-950/80 px-3 py-1 rounded-full border border-white/20">
-                  WATCH INTRO VIDEO (2:30)
-                </span>
-              </div>
             </div>
 
             <p className="relative z-10 text-[11px] font-mono text-slate-400 mt-4 text-center">
@@ -659,7 +628,7 @@ export default function MeetOurMentor() {
                 {/* Embed YouTube video or fallback placeholder frame */}
                 <iframe
                   className="w-full h-full"
-                  src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1"
+                  src="https://www.youtube.com/embed/6NwS6PsSwyY?autoplay=1"
                   title="Prof. Vishal Shibad Introduction"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
